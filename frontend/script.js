@@ -10,4 +10,4 @@ document.getElementById('videoForm').addEventListener('submit', async function(e
         },
         body: JSON.stringify({ url: videoUrl })
     });
-});
+});jg
