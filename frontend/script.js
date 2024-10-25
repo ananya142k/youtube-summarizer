@@ -23,7 +23,8 @@ document.getElementById('videoForm').addEventListener('submit', async function(e
         const timestampsList = document.getElementById('timestamps');
         timestampsList.innerHTML = '';
 
-        if (data.results && data.results.channels && data.results.channels[0].alternatives && data.results.channels[0].alternatives[0].words) {
+        if (data.results && data.results.channels && data.results.channels[0] &&
+            data.results.channels[0].alternatives && data.results.channels[0].alternatives[0].words) {
             const words = data.results.channels[0].alternatives[0].words;
             words.forEach(word => {
                 const li = document.createElement('li');

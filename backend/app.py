@@ -1,61 +1,61 @@
-from flask import Flask, request, jsonify
-from utils import get_video_metadata, download_audio, summarize_text
-import os
+from flask import Flask, request, jsonify, send_from_directory
+from utils import get_video_metadata, download_audio, summarize_text, transcribe_audio
 import asyncio
-from deepgram import Deepgram
+import os
+import logging
 
-app = Flask(__name__, static_url_path='/frontend', static_folder='frontend')
+# Configure logging
+logging.basicConfig(level=logging.DEBUG)
 
-DEEPGRAM_API_KEY = os.getenv('DEEPGRAM_API_KEY', 'YOUR_DEEPGRAM_API_KEY')
-PARAMS = {'punctuate': True, 'tier': 'enhanced'}
+app = Flask(__name__, static_folder='../frontend')
 
-async def transcribe_audio(file_path):
-    deepgram = Deepgram(DEEPGRAM_API_KEY)
-    print("Currently transcribing", file_path)
+# Route to serve the main index.html
+@app.route('/')
+def index():
+    return send_from_directory('../frontend', 'index.html')
 
-    with open(file_path, 'rb') as audio:
-        source = {'buffer': audio, 'mimetype': 'audio/mp3'}
-        response = await deepgram.transcription.prerecorded(source, PARAMS)
-        return response
-
+# Route to process the YouTube video and return summary, transcript, etc.
 @app.route('/process', methods=['POST'])
 def process_video():
-    video_url = request.json.get('url')
-    
-    if not video_url:
-        return jsonify({'error': 'No URL provided'}), 400
+    try:
+        video_url = request.json.get('url')
 
-    video_id = extract_video_id(video_url)
-    if not video_id:
-        return jsonify({'error': 'Invalid YouTube URL'}), 400
+        if not video_url:
+            return jsonify({'error': 'No URL provided'}), 400
 
-    metadata = get_video_metadata(video_id)
-    if not metadata:
-        return jsonify({'error': 'Video metadata not found'}), 404
+        logging.debug(f"Processing video URL: {video_url}")
 
-    download_status = download_audio(video_url)
-    if download_status['status'] == 'error':
-        return jsonify({'error': download_status['message']}), 500
+        # Directly use the video URL for fetching metadata
+        metadata = get_video_metadata(video_url)
+        if not metadata:
+            return jsonify({'error': 'Video metadata not found'}), 404
 
-    transcription_response = asyncio.run(transcribe_audio(download_status['audio_file']))
+        downloaded_audio = download_audio(video_url)
+        if downloaded_audio['status'] == 'error':
+            logging.error(f"Error downloading audio: {downloaded_audio['message']}")
+            return jsonify({'error': downloaded_audio['message']}), 500
 
-    # Extract transcription from the response
-    transcript = transcription_response.get('results', {}).get('channels', [{}])[0].get('alternatives', [{}])[0].get('transcript', '')
+        transcription_response = asyncio.run(transcribe_audio(downloaded_audio['audio_file']))
+        logging.debug(f"Transcription response: {transcription_response}")
 
-    # Summarize the transcription using GPT
-    summary = summarize_text(transcript)
+        # Extract transcription from the response
+        transcript = transcription_response.get('channel', {}).get('alternatives', [{}])[0].get('transcript', '')
+        logging.debug(f"Transcript: {transcript}")
 
-    return jsonify({'metadata': metadata, 'transcription': transcript, 'summary': summary}), 200
+        # Summarize the transcription using GPT
+        summary = summarize_text(transcript)
+        logging.debug(f"Summary: {summary}")
 
-def extract_video_id(url):
-    if 'youtu.be/' in url:
-        return url.split('youtu.be/')[1].split('?')[0]
-    elif 'v=' in url:
-        return url.split('v=')[1].split('&')[0]
-    else:
-        return None
+        return jsonify({'metadata': metadata, 'transcription': transcript, 'summary': summary}), 200
+
+    except Exception as e:
+        logging.exception(f"An unexpected error occurred: {e}")
+        return jsonify({'error': str(e)}), 500
+
+# Serve static files (CSS, JS)
+@app.route('/frontend/<path:path>')
+def serve_static_files(path):
+    return send_from_directory('../frontend', path)
 
 if __name__ == '__main__':
-    if not os.path.exists('downloads'):
-        os.makedirs('downloads')
     app.run(debug=True)
