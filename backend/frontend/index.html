@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ananya's Personal Summarizer</title>
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://cdn.jsdelivr.net/npm/remixicon@3.5.0/fonts/remixicon.css" rel="stylesheet">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Ananya's Personal Summarizer</h1>
+            <p class="subtitle">Extract Key Insights from Any YouTube Video</p>
+        </header>
+        
+        <div class="input-section">
+            <form id="videoForm" class="form-group">
+                <input 
+                    type="url" 
+                    id="videoUrl" 
+                    placeholder="Paste YouTube video URL" 
+                    required
+                >
+                <button type="submit">
+                    <i class="ri-search-line"></i> Analyze
+                </button>
+            </form>
+        </div>
+
+        <div id="loader" class="loader" style="display: none;">
+            <div class="spinner"></div>
+            <p>Processing video...</p>
+        </div>
+
+        <div id="outputSection" class="output-section" style="display: none;">
+            <div class="video-info">
+                <img id="thumbnail" class="thumbnail" src="" alt="Video Thumbnail">
+                <div class="video-details">
+                    <h2 id="videoTitle"></h2>
+                    <p id="videoDescription" class="description"></p>
+                </div>
+            </div>
+
+            <div class="tabs">
+                <button class="tab-btn active" data-tab="summary">Summary</button>
+                <button class="tab-btn" data-tab="transcript">Transcript</button>
+                <button class="tab-btn" data-tab="timestamps">Subtitles</button>
+            </div>
+
+            <div id="summary" class="tab-content active">
+                <h3>Key Insights</h3>
+                <div id="summaryContent"></div>
+            </div>
+
+            <div id="transcript" class="tab-content">
+                <h3>Full Transcript</h3>
+                <div id="transcriptContent"></div>
+            </div>
+
+            <div id="timestamps" class="tab-content">
+                <h3>Timestamps</h3>
+                <div id="timestampsContent"></div>
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
