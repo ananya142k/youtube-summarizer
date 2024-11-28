@@ -6,7 +6,6 @@ from pytubefix import YouTube
 from deepgram import Deepgram
 from dotenv import load_dotenv
 import asyncio
-import tempfile
 
 # Load environment variables
 load_dotenv()
@@ -20,7 +19,7 @@ co = cohere.Client(cohere_api_key)
 async def download_audio(video_url):
     """Download audio from YouTube video."""
 
-    downloads_folder = tempfile.gettempdir()
+    downloads_folder = "downloads"
     if not os.path.exists(downloads_folder):
         os.makedirs(downloads_folder)
 
