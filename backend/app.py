@@ -8,6 +8,7 @@ import logging
 logging.basicConfig(level=logging.DEBUG)
 
 app = Flask(__name__)
+port = int(os.environ.get('PORT', 5000))
 
 
 @app.route("/")
@@ -87,4 +88,4 @@ def serve_static_files(path):
 
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    app.run(host='0.0.0.0', port=port)
