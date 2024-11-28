@@ -4,6 +4,5 @@ cohere==4.27.0
 deepgram-sdk==3.2.7
 python-dotenv==0.21.0
 aiohttp==3.8.4
-logging==0.5.1.2
 gunicorn==20.1.0
 typing-extensions  # Sometimes needed for compatibility
