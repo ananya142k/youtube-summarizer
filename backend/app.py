@@ -1,5 +1,5 @@
 from flask import Flask, request, jsonify, send_from_directory
-from utils import get_video_metadata, download_audio, summarize_text, transcribe_audio
+from .utils import get_video_metadata, download_audio, summarize_text, transcribe_audio
 import asyncio
 import os
 import logging
@@ -7,19 +7,15 @@ import logging
 # Configure logging
 logging.basicConfig(level=logging.DEBUG)
 
-app = Flask(__name__)
-port = int(os.environ.get("PORT", 5000))
-
+app = Flask(__name__, static_folder='frontend', static_url_path='/')
 
 @app.route("/")
 def serve_index():
     return send_from_directory("frontend", "index.html")
 
-
 @app.route("/<path:filename>")
 def serve_static(filename):
     return send_from_directory("frontend", filename)
-
 
 # Route to process the YouTube video and return summary, transcript, etc.
 @app.route("/process", methods=["POST"])
@@ -80,12 +76,9 @@ def process_video():
         logging.exception(f"An unexpected error occurred: {e}")
         return jsonify({"error": str(e)}), 500
 
-
-# Serve static files (CSS, JS)
-@app.route("/frontend/<path:path>")
-def serve_static_files(path):
-    return send_from_directory("../frontend", path)
-
+# Ensure downloads folder exists
+os.makedirs(os.path.join(os.path.dirname(__file__), 'downloads'), exist_ok=True)
 
 if __name__ == "__main__":
+    port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port)
