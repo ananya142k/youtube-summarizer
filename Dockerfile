@@ -10,9 +10,6 @@ COPY frontend/ ./frontend
 
 WORKDIR /app/backend
 
-ENV FLASK_APP=app.py
-ENV FLASK_RUN_HOST=0.0.0.0
-
 EXPOSE 5000
 
-CMD ["flask", "run"]
+CMD ["gunicorn", "-b", "0.0.0.0:5000", "app:app"]
