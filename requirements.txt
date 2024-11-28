@@ -1,8 +1,8 @@
 Flask==2.1.0
 pytubefix==5.1.1
-cohere==4.27.0
-deepgram-sdk==3.2.7
-python-dotenv==0.21.0
-aiohttp==3.8.4
+cohere==4.26.0  # Slightly older version
+deepgram-sdk==3.0.0  # Older version
+python-dotenv==0.20.0
+aiohttp==3.7.4
 gunicorn==20.1.0
-typing-extensions  # Sometimes needed for compatibility
+typing-extensions
