@@ -1,6 +1,5 @@
 from flask import Flask, request, jsonify, send_from_directory
-from utils import get_video_metadata, download_audio, summarize_text, transcribe_audio
-import asyncio
+from backend.utils import get_video_metadata, download_audio, summarize_text, transcribe_audioimport asyncio
 import os
 import logging
 
