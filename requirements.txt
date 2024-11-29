@@ -6,4 +6,5 @@ cohere==4.24.0
 deepgram-sdk==3.2.7
 python-dotenv==0.20.0
 gunicorn==20.1.0
+flask-cors==4.0.0
 typing-extensions
