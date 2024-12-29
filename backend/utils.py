@@ -2,8 +2,8 @@ import os
 import logging
 import aiohttp
 import cohere
-import re
-import yt_dlp  # Using yt-dlp as a more reliable alternative to pytubefix
+from pytubefix import YouTube
+from deepgram import Deepgram
 from dotenv import load_dotenv
 import asyncio
 
@@ -17,32 +17,22 @@ co = cohere.Client(cohere_api_key)
 
 
 async def download_audio(video_url):
-    """Download audio from YouTube video using yt-dlp."""
+    """Download audio from YouTube video."""
 
     downloads_folder = "downloads"
     if not os.path.exists(downloads_folder):
         os.makedirs(downloads_folder)
 
     try:
-        ydl_opts = {
-            "format": "bestaudio/best",
-            "postprocessors": [
-                {
-                    "key": "FFmpegExtractAudio",
-                    "preferredcodec": "mp3",
-                    "preferredquality": "192",
-                }
-            ],
-            "outtmpl": os.path.join(downloads_folder, "%(title)s.%(ext)s"),
-            "nooverwrites": True,
-            "no_color": True,
-            "quiet": True,
-        }
+        yt = YouTube(video_url)
+        audio_stream = yt.streams.get_audio_only()
 
-        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-            info_dict = ydl.extract_info(video_url, download=True)
-            audio_file_name = ydl.prepare_filename(info_dict)
-            audio_file_path = audio_file_name.rsplit(".", 1)[0] + ".mp3"
+        audio_file_name = sanitize_filename(yt.title)
+        audio_file_path = os.path.join(downloads_folder, f"{audio_file_name}.mp3")
+
+        audio_stream.download(
+            output_path=downloads_folder, filename=f"{audio_file_name}.mp3"
+        )
 
         if os.path.exists(audio_file_path):
             return {"status": "success", "audio_file": audio_file_path}
@@ -97,55 +87,19 @@ async def delete_file(file_path):
 
 
 def get_video_metadata(video_url):
-    """Fetch metadata for a YouTube video using yt-dlp."""
+    """Fetch metadata for a YouTube video."""
     try:
-        ydl_opts = {
-            "quiet": True,
-            "no_color": True,
+        yt = YouTube(video_url)
+        metadata = {
+            "title": yt.title,
+            "description": yt.description,
+            "thumbnail": yt.thumbnail_url,
         }
-
-        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-            # Validate and standardize URL
-            video_url = standardize_youtube_url(video_url)
-
-            # Extract video info
-            info_dict = ydl.extract_info(video_url, download=False)
-
-            # Prepare metadata
-            metadata = {
-                "title": info_dict.get("title", "Unknown Title"),
-                "description": info_dict.get("description", "No description available"),
-                "thumbnail": info_dict.get("thumbnail", ""),
-            }
-
         return metadata
 
     except Exception as e:
-        logging.error(f"Error fetching metadata for {video_url}: {e}")
+        logging.error(f"Error fetching metadata: {e}")
         return None
-
-
-def standardize_youtube_url(url):
-    """
-    Standardize YouTube URL to ensure consistent parsing.
-    Supports various YouTube URL formats.
-    """
-    # List of possible YouTube URL patterns
-    youtube_patterns = [
-        r"(?:https?:\/\/)?(?:www\.)?youtube\.com\/watch\?v=([^&]+)",
-        r"(?:https?:\/\/)?(?:www\.)?youtu\.be\/([^?&]+)",
-        r"(?:https?:\/\/)?(?:www\.)?youtube\.com\/embed\/([^?&]+)",
-    ]
-
-    # Try to match and extract video ID
-    for pattern in youtube_patterns:
-        match = re.search(pattern, url)
-        if match:
-            video_id = match.group(1)
-            return f"https://www.youtube.com/watch?v={video_id}"
-
-    # If no match found, return original URL
-    return url
 
 
 def sanitize_filename(filename):
