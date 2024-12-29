@@ -16,6 +16,7 @@ cohere_api_key = os.getenv("COHERE_API_KEY")
 co = cohere.Client(cohere_api_key)
 
 # Configure yt-dlp
+# In utils.py
 ydl_opts = {
     'format': 'bestaudio/best',
     'postprocessors': [{
@@ -25,6 +26,8 @@ ydl_opts = {
     }],
     'quiet': True,
     'no_warnings': True,
+    'cookiesfrombrowser': ('chrome',),  # Use cookies from Chrome
+    'user_agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
 }
 
 async def download_audio(video_url):
@@ -109,10 +112,25 @@ def get_video_metadata(video_url):
             }
             return metadata
 
+    except yt_dlp.utils.DownloadError as e:
+        if "Sign in to confirm you're not a bot" in str(e):
+            logging.error(f"YouTube bot detection triggered: {e}")
+            return {
+                'error': 'YouTube bot detection triggered. Please try again in a few minutes or try a different video.',
+                'status': 'bot_detection'
+            }
+        else:
+            logging.error(f"Error fetching metadata: {e}")
+            return {
+                'error': str(e),
+                'status': 'error'
+            }
     except Exception as e:
-        logging.error(f"Error fetching metadata: {e}")
-        return None
-
+        logging.error(f"Unexpected error fetching metadata: {e}")
+        return {
+            'error': 'An unexpected error occurred while fetching video metadata.',
+            'status': 'error'
+        }
 
 def sanitize_filename(filename):
     """Sanitize the filename to avoid issues with invalid characters."""
