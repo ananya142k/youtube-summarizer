@@ -5,14 +5,14 @@ services:
     region: oregon
     branch: main
     buildCommand: pip install -r requirements.txt
-    startCommand: cd backend && gunicorn -w 4 -b 0.0.0.0:$PORT app:app
+    startCommand: gunicorn -w 4 -b 0.0.0.0:$PORT backend.app:app
     envVars:
       - key: DEEPGRAM_API_KEY
         sync: false
       - key: COHERE_API_KEY
         sync: false
       - key: PYTHON_VERSION
-        value: 3.9.17  # Updated to a slightly newer patch version
+        value: 3.9.17
       - key: PORT
         value: 5000
 
@@ -20,11 +20,9 @@ services:
     autoDeploy: true
     plan: free
 
-    # Optional: Configure automatic scaling
     scalingConfig:
       maxInstances: 1
 
-    # Optional: Additional environment variables can be added here
     additionalEnvVars:
       - key: DEBUG
         value: "False"
