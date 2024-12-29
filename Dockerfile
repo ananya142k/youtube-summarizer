@@ -7,9 +7,10 @@ ENV PYTHONUNBUFFERED 1
 # Set work directory
 WORKDIR /app
 
-# Install system dependencies
+# Install system dependencies including ffmpeg
 RUN apt-get update && apt-get install -y \
     build-essential \
+    ffmpeg \
     && rm -rf /var/lib/apt/lists/*
 
 # Copy requirements first to leverage Docker cache
