@@ -8,7 +8,7 @@ from backend.utils import (
 import asyncio
 import os
 import logging
-from flask_cors import CORS
+from flask_cors import CORS 
 
 # Configure logging to be more verbose
 logging.basicConfig(

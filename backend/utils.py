@@ -113,8 +113,24 @@ def get_video_metadata(video_url):
         logging.error(f"Error fetching metadata: {e}")
         return None
 
+
 def sanitize_filename(filename):
     """Sanitize the filename to avoid issues with invalid characters."""
     return "".join(
         char for char in filename if char.isalnum() or char in (" ", ".", "_")
     ).rstrip()
+    
+def summarize_text(text):
+    """Summarize text using Cohere's API."""
+    try:
+        response = co.summarize(
+            text=text,
+            length='medium',
+            format='paragraph',
+            temperature=0.3,
+            additional_command='Focus on the main points and key insights.'
+        )
+        return response.summary
+    except Exception as e:
+        logging.error(f"Error generating summary: {e}")
+        return "Summary could not be generated."

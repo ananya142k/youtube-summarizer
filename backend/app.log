@@ -133,3 +133,38 @@ Accept-Encoding: gzip, deflate
 2024-12-29 15:46:04,448 - werkzeug - INFO - 192.168.29.182 - - [29/Dec/2024 15:46:04] "POST /process HTTP/1.1" 200 -
 2024-12-29 15:47:25,864 - werkzeug - INFO -  * Detected change in 'E:\\coding projects\\youtube-summarizer\\backend\\app.py', reloading
 2024-12-29 15:47:26,140 - werkzeug - INFO -  * Restarting with stat
+2024-12-29 16:19:37,667 - werkzeug - INFO - [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:5000
+ * Running on http://192.168.29.182:5000
+2024-12-29 16:19:37,668 - werkzeug - INFO - [33mPress CTRL+C to quit[0m
+2024-12-29 16:19:37,671 - werkzeug - INFO -  * Restarting with stat
+2024-12-29 16:19:41,862 - werkzeug - WARNING -  * Debugger is active!
+2024-12-29 16:19:41,868 - werkzeug - INFO -  * Debugger PIN: 250-326-554
+2024-12-29 16:19:42,572 - root - INFO - Serving index.html
+2024-12-29 16:19:42,785 - werkzeug - INFO - 192.168.29.182 - - [29/Dec/2024 16:19:42] "[36mGET / HTTP/1.1[0m" 304 -
+2024-12-29 16:19:42,841 - werkzeug - INFO - 192.168.29.182 - - [29/Dec/2024 16:19:42] "[36mGET /styles.css HTTP/1.1[0m" 304 -
+2024-12-29 16:19:42,843 - werkzeug - INFO - 192.168.29.182 - - [29/Dec/2024 16:19:42] "[36mGET /script.js HTTP/1.1[0m" 304 -
+2024-12-29 16:19:45,551 - root - INFO - Received request to /process
+2024-12-29 16:19:45,552 - root - DEBUG - Request method: POST
+2024-12-29 16:19:45,553 - root - DEBUG - Request headers: Host: 192.168.29.182:5000
+Connection: keep-alive
+Content-Length: 38
+User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36
+Content-Type: application/json
+Accept: */*
+Sec-Gpc: 1
+Accept-Language: en-US,en
+Origin: http://192.168.29.182:5000
+Referer: http://192.168.29.182:5000/
+Accept-Encoding: gzip, deflate
+
+
+2024-12-29 16:19:45,554 - root - DEBUG - Parsed request data: {'url': 'https://youtu.be/0CmtDk-joT4'}
+2024-12-29 16:19:45,555 - root - INFO - Processing video URL: https://youtu.be/0CmtDk-joT4
+2024-12-29 16:19:45,556 - asyncio - DEBUG - Using proactor: IocpProactor
+2024-12-29 16:20:37,163 - root - ERROR - Failed to download audio from https://youtu.be/0CmtDk-joT4: [0;31mERROR:[0m Postprocessing: ffprobe and ffmpeg not found. Please install or provide the path using --ffmpeg-location
+2024-12-29 16:20:37,164 - root - ERROR - Audio download error: [0;31mERROR:[0m Postprocessing: ffprobe and ffmpeg not found. Please install or provide the path using --ffmpeg-location
+2024-12-29 16:20:37,167 - werkzeug - INFO - 192.168.29.182 - - [29/Dec/2024 16:20:37] "[35m[1mPOST /process HTTP/1.1[0m" 500 -
+2024-12-29 16:20:57,917 - werkzeug - INFO -  * Detected change in 'E:\\coding projects\\youtube-summarizer\\backend\\app.py', reloading
+2024-12-29 16:20:58,291 - werkzeug - INFO -  * Restarting with stat
