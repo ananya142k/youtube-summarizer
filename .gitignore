@@ -9,3 +9,6 @@ __pycache__/
 
 # Temporary files
 downloads/
+
+render.yaml
+Dockerfile
