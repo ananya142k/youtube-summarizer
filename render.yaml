@@ -5,6 +5,7 @@ services:
     buildCommand: |
       apt-get update && apt-get install -y ffmpeg
       pip install -r requirements.txt
+      yt-dlp -U
     startCommand: gunicorn -w 4 -b 0.0.0.0:$PORT app:app
     envVars:
       - key: DEEPGRAM_API_KEY

@@ -6,6 +6,7 @@ from deepgram import Deepgram
 from dotenv import load_dotenv
 from googleapiclient.discovery import build
 import yt_dlp
+import random
 
 load_dotenv()
 deepgram_api_key = os.getenv("DEEPGRAM_API_KEY")
@@ -24,22 +25,53 @@ if not os.path.exists(DOWNLOADS_FOLDER):
 
 async def download_audio(video_url):
     try:
+        # List of common user agents
+        user_agents = [
+            'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+            'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+            'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Edge/120.0.0.0 Safari/537.36'
+        ]
+
         ydl_opts = {
             'format': 'bestaudio/best',
-            'outtmpl': os.path.join(DOWNLOADS_FOLDER, '%(id)s.%(ext)s'),
             'postprocessors': [{
                 'key': 'FFmpegExtractAudio',
                 'preferredcodec': 'mp3',
-            }]
+                'preferredquality': '192',
+            }],
+            'outtmpl': os.path.join(DOWNLOADS_FOLDER, '%(title)s.%(ext)s'),
+            'quiet': True,
+            'no_warnings': True,
+            'nocheckcertificate': True,
+            'http_headers': {
+                'User-Agent': random.choice(user_agents),
+                'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+                'Accept-Language': 'en-us,en;q=0.5',
+                'Sec-Fetch-Mode': 'navigate',
+            },
+            'extractor_retries': 5,
+            'file_access_retries': 5,
+            'fragment_retries': 5,
+            'skip_download_archive': True,
+            'rm_cachedir': True
         }
         
-        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+        with YoutubeDL(ydl_opts) as ydl:
+            # Force IP v4 and update cookies
+            ydl.params['source_address'] = '0.0.0.0'
+            
             info = ydl.extract_info(video_url, download=True)
-            audio_file = os.path.join(DOWNLOADS_FOLDER, f"{info['id']}.mp3")
-            return {"status": "success", "audio_file": audio_file}
+            audio_file_path = os.path.join(
+                DOWNLOADS_FOLDER, 
+                f"{sanitize_filename(info['title'])}.mp3"
+            )
+            
+            if os.path.exists(audio_file_path):
+                return {"status": "success", "audio_file": audio_file_path}
+            return {"status": "error", "message": "Audio file download failed."}
 
     except Exception as e:
-        logging.error(f"Failed to download audio: {e}")
+        logging.error(f"Failed to download audio from {video_url}: {e}")
         return {"status": "error", "message": str(e)}
 
 
