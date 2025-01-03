@@ -5,32 +5,25 @@ import os
 import logging
 from flask_cors import CORS
 
-
 logging.basicConfig(level=logging.DEBUG)
 
-app = Flask(__name__)
+app = Flask(__name__, static_folder='../frontend')
 CORS(app)
-
-# Update static file serving
-STATIC_FOLDER = os.path.join(os.path.dirname(os.path.dirname(__file__)), "frontend")
 
 @app.route("/")
 def serve_index():
-    return send_from_directory(STATIC_FOLDER, "index.html")
+    return send_from_directory(app.static_folder, "index.html")
 
 @app.route("/<path:filename>")
 def serve_static(filename):
-    return send_from_directory(STATIC_FOLDER, filename)
+    return send_from_directory(app.static_folder, filename)
 
-@app.route("/api/process", methods=["POST"])
+@app.route("/process", methods=["POST"])  # Changed from /api/process to /process
 def process_video():
     try:
         video_url = request.json.get("url")
-
         if not video_url:
             return jsonify({"error": "No URL provided"}), 400
-
-        logging.debug(f"Processing video URL: {video_url}")
 
         async def process_async():
             metadata = get_video_metadata(video_url)
@@ -39,22 +32,14 @@ def process_video():
 
             downloaded_audio = await download_audio(video_url)
             if downloaded_audio["status"] == "error":
-                logging.error(f"Error downloading audio: {downloaded_audio['message']}")
                 return jsonify({"error": downloaded_audio["message"]}), 500
 
-            transcription_response = await transcribe_audio(
-                downloaded_audio["audio_file"]
-            )
-            logging.debug(f"Transcription response: {transcription_response}")
-
+            transcription_response = await transcribe_audio(downloaded_audio["audio_file"])
             if transcription_response["status"] == "error":
                 return jsonify({"error": transcription_response["message"]}), 500
 
             transcript = transcription_response.get("transcript", "")
-            logging.debug(f"Transcript: {transcript}")
-
             summary = summarize_text(transcript)
-            logging.debug(f"Summary: {summary}")
 
             return jsonify({
                 "metadata": metadata,
