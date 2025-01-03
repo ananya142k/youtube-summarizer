@@ -79,7 +79,19 @@ async def delete_file(file_path):
 def get_video_metadata(video_url):
     """Fetch metadata using YouTube Data API."""
     try:
-        video_id = video_url.split('watch?v=')[1].split('&')[0]
+        # More robust URL parsing
+        video_id = None
+        if 'youtu.be' in video_url:
+            video_id = video_url.split('/')[-1].split('?')[0]
+        elif 'youtube.com' in video_url:
+            if 'v=' in video_url:
+                video_id = video_url.split('v=')[1].split('&')[0]
+            elif 'embed/' in video_url:
+                video_id = video_url.split('embed/')[1].split('?')[0]
+        
+        if not video_id:
+            raise ValueError("Invalid YouTube URL")
+
         request = youtube.videos().list(
             part="snippet,statistics",
             id=video_id
@@ -90,7 +102,7 @@ def get_video_metadata(video_url):
             return None
 
         video_data = response['items'][0]
-        metadata = {
+        return {
             'title': video_data['snippet']['title'],
             'description': video_data['snippet']['description'],
             'thumbnail': video_data['snippet']['thumbnails']['high']['url'],
@@ -98,12 +110,11 @@ def get_video_metadata(video_url):
             'likeCount': video_data['statistics'].get('likeCount', 0),
             'publishedAt': video_data['snippet']['publishedAt']
         }
-        return metadata
 
     except Exception as e:
         logging.error(f"Error fetching metadata: {e}")
         return None
-
+    
 def sanitize_filename(filename):
     """Sanitize the filename to avoid issues with invalid characters."""
     return "".join(
