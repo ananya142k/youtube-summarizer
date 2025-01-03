@@ -2,10 +2,10 @@ import os
 import logging
 import aiohttp
 import cohere
-from pytubefix import YouTube
 from deepgram import Deepgram
 from dotenv import load_dotenv
 from googleapiclient.discovery import build
+import yt_dlp
 
 load_dotenv()
 deepgram_api_key = os.getenv("DEEPGRAM_API_KEY")
@@ -13,7 +13,7 @@ cohere_api_key = os.getenv("COHERE_API_KEY")
 youtube_api_key = os.getenv("YOUTUBE_API_KEY")
 
 if not all([deepgram_api_key, cohere_api_key, youtube_api_key]):
-    raise ValueError("Missing required API keys in environment variables")
+    raise ValueError("Missing required API keys")
 
 youtube = build('youtube', 'v3', developerKey=youtube_api_key)
 co = cohere.Client(cohere_api_key)
@@ -22,26 +22,24 @@ DOWNLOADS_FOLDER = "/tmp/downloads"
 if not os.path.exists(DOWNLOADS_FOLDER):
     os.makedirs(DOWNLOADS_FOLDER)
 
-
 async def download_audio(video_url):
     try:
-        yt = YouTube(video_url)
-        audio_stream = yt.streams.get_audio_only()
+        ydl_opts = {
+            'format': 'bestaudio/best',
+            'outtmpl': os.path.join(DOWNLOADS_FOLDER, '%(id)s.%(ext)s'),
+            'postprocessors': [{
+                'key': 'FFmpegExtractAudio',
+                'preferredcodec': 'mp3',
+            }]
+        }
         
-        audio_file_name = sanitize_filename(yt.title)
-        audio_file_path = os.path.join(DOWNLOADS_FOLDER, f"{audio_file_name}.mp3")
-        
-        audio_stream.download(
-            output_path=DOWNLOADS_FOLDER,
-            filename=f"{audio_file_name}.mp3"
-        )
-        
-        if os.path.exists(audio_file_path):
-            return {"status": "success", "audio_file": audio_file_path}
-        return {"status": "error", "message": "Audio file download failed."}
+        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+            info = ydl.extract_info(video_url, download=True)
+            audio_file = os.path.join(DOWNLOADS_FOLDER, f"{info['id']}.mp3")
+            return {"status": "success", "audio_file": audio_file}
 
     except Exception as e:
-        logging.error(f"Failed to download audio from {video_url}: {e}")
+        logging.error(f"Failed to download audio: {e}")
         return {"status": "error", "message": str(e)}
 
 async def transcribe_audio(file_path):
