@@ -104,13 +104,7 @@ document.addEventListener('DOMContentLoaded', () => {
             outputSection.style.display = 'block';
 
         } catch (error) {
-            let errorMessage = error.message;
-            if (response.status === 429) {
-                errorMessage = "YouTube's bot detection was triggered. Please try again in a few minutes or try a different video.";
-            } else if (response.status === 404) {
-                errorMessage = "Video not found or is private. Please check the URL and try again.";
-            }
-            alert(errorMessage);
+            alert(`Error processing video: ${error.message}`);
             loader.style.display = 'none';
         }
     });

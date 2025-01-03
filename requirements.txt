@@ -1,6 +1,6 @@
 Flask==2.2.5
 Werkzeug==2.2.3
-yt-dlp==2024.3.10
+pytubefix==5.1.1
 cohere==4.25.0
 aiohttp==3.9.1
 deepgram-sdk==3.2.7
@@ -8,4 +8,4 @@ python-dotenv==0.20.0
 gunicorn==20.1.0
 flask-cors==4.0.0
 typing-extensions
-ffmpeg-python==0.2.0
+google-api-python-client==2.108.0
