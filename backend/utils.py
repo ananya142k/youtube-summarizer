@@ -2,13 +2,10 @@ import os
 import logging
 import aiohttp
 import cohere
-import yt_dlp
-import ssl
-import certifi
 from deepgram import Deepgram
 from dotenv import load_dotenv
 from googleapiclient.discovery import build
-import random
+import yt_dlp
 
 load_dotenv()
 deepgram_api_key = os.getenv("DEEPGRAM_API_KEY")
@@ -25,74 +22,24 @@ DOWNLOADS_FOLDER = "/tmp/downloads"
 if not os.path.exists(DOWNLOADS_FOLDER):
     os.makedirs(DOWNLOADS_FOLDER)
 
-ssl_context = ssl.create_default_context(cafile=certifi.where())
-ssl_context.check_hostname = False
-ssl_context.verify_mode = ssl.CERT_NONE
-
 async def download_audio(video_url):
     try:
-        # List of common user agents
-        user_agents = [
-            'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-            'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-            'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Edge/120.0.0.0 Safari/537.36'
-        ]
-
         ydl_opts = {
             'format': 'bestaudio/best',
+            'outtmpl': os.path.join(DOWNLOADS_FOLDER, '%(id)s.%(ext)s'),
             'postprocessors': [{
                 'key': 'FFmpegExtractAudio',
                 'preferredcodec': 'mp3',
-                'preferredquality': '192',
-            }],
-            'outtmpl': os.path.join(DOWNLOADS_FOLDER, '%(title)s.%(ext)s'),
-            'quiet': False,  # Changed to False for debugging
-            'no_warnings': False,  # Changed to False for debugging
-            'nocheckcertificate': True,
-            'http_headers': {
-                'User-Agent': random.choice(user_agents),
-                'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
-                'Accept-Language': 'en-us,en;q=0.5',
-                'Sec-Fetch-Mode': 'navigate',
-            },
-            'extractor_retries': 5,
-            'file_access_retries': 5,
-            'fragment_retries': 5,
-            'skip_download_archive': True,
-            'rm_cachedir': True,
-            'prefer_insecure': True,
-            'legacy_server_connect': True,
-            'socket_timeout': 30,
-            'cachedir': False,
-            'ssl_context': ssl_context
+            }]
         }
         
-        try:
-            with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-                # Force IP v4 and update cookies
-                ydl.params['source_address'] = '0.0.0.0'
-                
-                # Add debug logging
-                logging.debug(f"Starting download for URL: {video_url}")
-                info = ydl.extract_info(video_url, download=True)
-                logging.debug(f"Download info: {info}")
-                
-                audio_file_path = os.path.join(
-                    DOWNLOADS_FOLDER, 
-                    f"{sanitize_filename(info['title'])}.mp3"
-                )
-                
-                if os.path.exists(audio_file_path):
-                    logging.info(f"Successfully downloaded audio to: {audio_file_path}")
-                    return {"status": "success", "audio_file": audio_file_path}
-                return {"status": "error", "message": "Audio file download failed."}
-                
-        except yt_dlp.utils.DownloadError as e:
-            logging.error(f"YouTube download error: {str(e)}")
-            return {"status": "error", "message": f"Download error: {str(e)}"}
+        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+            info = ydl.extract_info(video_url, download=True)
+            audio_file = os.path.join(DOWNLOADS_FOLDER, f"{info['id']}.mp3")
+            return {"status": "success", "audio_file": audio_file}
 
     except Exception as e:
-        logging.error(f"Failed to download audio from {video_url}: {e}")
+        logging.error(f"Failed to download audio: {e}")
         return {"status": "error", "message": str(e)}
 
 
