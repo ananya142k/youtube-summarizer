@@ -10,6 +10,10 @@ logging.basicConfig(level=logging.DEBUG)
 app = Flask(__name__, static_folder='../frontend')
 CORS(app)
 
+# Ensure the downloads directory exists
+if not os.path.exists('/tmp/downloads'):
+    os.makedirs('/tmp/downloads')
+
 @app.route("/")
 def serve_index():
     return send_from_directory(app.static_folder, "index.html")
@@ -18,7 +22,7 @@ def serve_index():
 def serve_static(filename):
     return send_from_directory(app.static_folder, filename)
 
-@app.route("/process", methods=["POST"])  # Changed from /api/process to /process
+@app.route("/process", methods=["POST"])
 def process_video():
     try:
         video_url = request.json.get("url")
