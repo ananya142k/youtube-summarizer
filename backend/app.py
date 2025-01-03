@@ -1,9 +1,10 @@
 from flask import Flask, request, jsonify, send_from_directory
-from utils import get_video_metadata, download_audio, summarize_text, transcribe_audio
+from backend.utils import get_video_metadata, download_audio, summarize_text, transcribe_audio
 import asyncio
 import os
 import logging
 from flask_cors import CORS
+
 
 logging.basicConfig(level=logging.DEBUG)
 
