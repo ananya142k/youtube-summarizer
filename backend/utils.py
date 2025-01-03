@@ -5,7 +5,7 @@ import cohere
 from deepgram import Deepgram
 from dotenv import load_dotenv
 from googleapiclient.discovery import build
-import yt_dlp
+from yt_dlp import YoutubeDL
 import random
 
 load_dotenv()
