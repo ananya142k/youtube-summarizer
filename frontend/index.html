@@ -1,27 +1,31 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Personal Summarizer</title>
     <link rel="stylesheet" href="styles.css">
     <link href="https://cdn.jsdelivr.net/npm/remixicon@3.5.0/fonts/remixicon.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
-<body>
+
+<body class="light-theme">
+    <div class="theme-toggle">
+        <button id="themeToggle">
+            <i class="ri-sun-line"></i>
+        </button>
+    </div>
+
     <div class="container">
         <header>
             <h1>Personal Summarizer</h1>
             <p class="subtitle">Extract Key Insights from Any YouTube Video</p>
         </header>
-        
+
         <div class="input-section">
             <form id="videoForm" class="form-group">
-                <input 
-                    type="url" 
-                    id="videoUrl" 
-                    placeholder="Paste YouTube video URL" 
-                    required
-                >
+                <input type="url" id="videoUrl" placeholder="Paste YouTube video URL" required>
                 <button type="submit">
                     <i class="ri-search-line"></i> Analyze
                 </button>
@@ -29,42 +33,135 @@
         </div>
 
         <div id="loader" class="loader" style="display: none;">
+            <div class="processing-steps">
+                <div class="step">Fetching video information...</div>
+                <div class="step">Downloading audio...</div>
+                <div class="step">Generating transcript...</div>
+                <div class="step">Creating summary...</div>
+            </div>
             <div class="spinner"></div>
-            <p>Processing video...</p>
         </div>
 
         <div id="outputSection" class="output-section" style="display: none;">
-            <div class="video-info">
-                <img id="thumbnail" class="thumbnail" src="" alt="Video Thumbnail">
-                <div class="video-details">
-                    <h2 id="videoTitle"></h2>
-                    <p id="videoDescription" class="description"></p>
+            <div class="video-container">
+                <div id="player"></div>
+                <div class="video-info">
+                    <div class="video-details">
+                        <h2 id="videoTitle"></h2>
+                        <div class="video-meta">
+                            <span id="videoAuthor"></span>
+                            <span id="videoViews"></span>
+                            <span id="videoDate"></span>
+                        </div>
+                        <p id="videoDescription" class="description"></p>
+                    </div>
                 </div>
             </div>
 
             <div class="tabs">
-                <button class="tab-btn active" data-tab="summary">Summary</button>
-                <button class="tab-btn" data-tab="transcript">Transcript</button>
-                <button class="tab-btn" data-tab="timestamps">Subtitles</button>
+                <button class="tab-btn active" data-tab="summary">
+                    <i class="ri-file-list-line"></i> Summary
+                </button>
+                <button class="tab-btn" data-tab="transcript">
+                    <i class="ri-draft-line"></i> Transcript
+                </button>
+                <button class="tab-btn" data-tab="visualization">
+                    <i class="ri-bar-chart-line"></i> Visualization
+                </button>
+                <button class="tab-btn" data-tab="subtitles">
+                    <i class="ri-message-2-line"></i> Subtitles
+                </button>
             </div>
 
             <div id="summary" class="tab-content active">
-                <h3>Key Insights</h3>
+                <div class="content-header">
+                    <h3>Key Insights</h3>
+                    <span class="reading-time"></span>
+                </div>
                 <div id="summaryContent"></div>
             </div>
 
             <div id="transcript" class="tab-content">
-                <h3>Full Transcript</h3>
+                <div class="content-header">
+                    <h3>Full Transcript</h3>
+                    <div class="transcript-controls">
+                        <input type="text" id="searchTranscript" placeholder="Search in transcript...">
+                        <button id="copyTranscript" title="Copy transcript">
+                            <i class="ri-file-copy-line"></i>
+                        </button>
+                    </div>
+                </div>
                 <div id="transcriptContent"></div>
+                <div id="copyNotification" class="copy-notification">
+                    <i class="ri-check-line"></i> Copied to clipboard
+                </div>
             </div>
 
-            <div id="timestamps" class="tab-content">
-                <h3>Timestamps</h3>
-                <div id="timestampsContent"></div>
+            <div id="visualization" class="tab-content">
+                <div class="content-header">
+                    <h3>Word Frequency Analysis</h3>
+                </div>
+                <div class="chart-container">
+                    <canvas id="wordFrequencyChart"></canvas>
+                </div>
             </div>
+
+            <div id="subtitles" class="tab-content">
+                <div class="content-header">
+                    <h3>Interactive Subtitles</h3>
+                    <div class="subtitle-controls">
+                        <button id="downloadSrt">
+                            <i class="ri-download-line"></i> Download SRT
+                        </button>
+                    </div>
+                </div>
+                <div id="subtitlesContent"></div>
+            </div>
+        </div>
+        <div id="recentVideos" class="recent-videos" style="display: none;">
+            <h3>Recent Videos</h3>
+            <div class="recent-videos-grid"></div>
+        </div>
+    </div>
+
+    <footer>
+        <p>Made with ❤️ by
+            <a href="https://www.linkedin.com/in/ananyasingh142/" target="_blank">Ananya</a> &
+            <a href="https://github.com/vatszal" target="_blank">Vatsal</a>
+        </p>
+        <div class="keyboard-shortcuts desktop-only">
+            <button id="showShortcuts">
+                <i class="ri-keyboard-line"></i> Keyboard Shortcuts
+            </button>
+        </div>
+    </footer>
+
+    <div id="shortcutsModal" class="modal">
+        <div class="modal-content">
+            <h3>Keyboard Shortcuts</h3>
+            <div class="shortcuts-grid">
+                <div class="shortcut">
+                    <kbd>Ctrl</kbd> + <kbd>Enter</kbd>
+                    <span>Process video</span>
+                </div>
+                <div class="shortcut">
+                    <kbd>1</kbd> - <kbd>4</kbd>
+                    <span>Switch tabs</span>
+                </div>
+                <div class="shortcut">
+                    <kbd>Ctrl</kbd> + <kbd>F</kbd>
+                    <span>Search transcript</span>
+                </div>
+                <div class="shortcut">
+                    <kbd>T</kbd>
+                    <span>Toggle theme</span>
+                </div>
+            </div>
+            <button class="close-modal">Close</button>
         </div>
     </div>
 
     <script src="script.js"></script>
 </body>
+
 </html>
