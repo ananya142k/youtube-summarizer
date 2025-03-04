@@ -788,3 +788,54 @@ footer a:hover {
     }
 }
 
+.description {
+    position: relative;
+    overflow: hidden;
+    line-height: 1.6;
+    margin-top: 0.5rem;
+}
+
+/* Mobile-specific styles */
+@media (max-width: 768px) {
+    .description {
+        max-height: 4.8em; /* Show 3 lines (1.6em * 3) */
+        -webkit-line-clamp: 3;
+        display: -webkit-box;
+        -webkit-box-orient: vertical;
+        text-overflow: ellipsis;
+    }
+}
+
+/* Desktop styles */
+@media (min-width: 769px) {
+    .description {
+        max-height: 9.6em; /* Show 6 lines (1.6em * 6) */
+        -webkit-line-clamp: 6;
+        display: -webkit-box;
+        -webkit-box-orient: vertical;
+        text-overflow: ellipsis;
+    }
+}
+
+.description-expanded {
+    max-height: none;
+    -webkit-line-clamp: unset;
+}
+
+.description-fade {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 24px;
+    background: linear-gradient(transparent, var(--surface-color));
+    pointer-events: none;
+}
+
+.expand-description {
+    color: var(--primary-color);
+    cursor: pointer;
+    margin-top: 0.5rem;
+    display: inline-block;
+    font-size: 0.9rem;
+}
