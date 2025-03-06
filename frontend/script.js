@@ -1,10 +1,11 @@
 document.addEventListener('DOMContentLoaded', () => {
+    
     // Initialize YouTube IFrame API
     const tag = document.createElement('script');
     tag.src = "https://www.youtube.com/iframe_api";
     const firstScriptTag = document.getElementsByTagName('script')[0];
     firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
-
+    
     // Global variables
     let player;
     const videoForm = document.getElementById('videoForm');
@@ -13,6 +14,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const tabs = document.querySelectorAll('.tab-btn');
     const recentVideos = document.getElementById('recentVideos');
     let wordFrequencyChart = null;
+    let currentVideoData = null;
 
     // Theme handling
     const themeToggle = document.getElementById('themeToggle');
@@ -197,40 +199,40 @@ document.addEventListener('DOMContentLoaded', () => {
     function updateSubtitles(data) {
         const subtitlesContent = document.getElementById('subtitlesContent');
         const transcriptContent = document.getElementById('transcriptContent');
-    
+
         // Always update the transcript tab with the transcription text
         if (data && data.transcription) {
             transcriptContent.textContent = data.transcription;
         } else {
             transcriptContent.textContent = 'No transcript available.';
         }
-    
+
         // Debugging: Log the subtitles data
         console.log('Subtitles Data:', data.subtitles);
-    
+
         // Update subtitles tab with timestamped content
-        if (data && data.subtitles && data.subtitles.length > 0) {
+        if (data && Array.isArray(data.subtitles) && data.subtitles.length > 0) {
             subtitlesContent.innerHTML = data.subtitles.map(subtitle => {
                 // Robust timestamp extraction
-                const startTime = 
-                    subtitle.start_seconds || 
-                    subtitle.start || 
-                    subtitle.startSeconds || 
+                const startTime =
+                    subtitle.start_seconds ||
+                    subtitle.start ||
+                    subtitle.startSeconds ||
                     0;
-                
-                const endTime = 
-                    subtitle.end_seconds || 
-                    subtitle.end || 
-                    subtitle.endSeconds || 
+
+                const endTime =
+                    subtitle.end_seconds ||
+                    subtitle.end ||
+                    subtitle.endSeconds ||
                     0;
-                
+
                 return `
                 <div class="subtitle-item" data-start="${startTime}" data-end="${endTime}">
                     <span class="subtitle-time">${formatTime(startTime)} → ${formatTime(endTime)}</span>
                     <p class="subtitle-text">${subtitle.text || 'No text'}</p>
                 </div>
             `}).join('');
-    
+
             // Add click handlers for subtitle navigation
             document.querySelectorAll('.subtitle-item').forEach(item => {
                 item.addEventListener('click', () => {
@@ -249,6 +251,17 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Chart handling
     function createWordFrequencyChart(data) {
+        // Check if data is null, undefined, or empty
+        if (!data || Object.keys(data).length === 0) {
+            console.warn('No word frequency data available');
+            // Hide or clear the chart container
+            const chartContainer = document.getElementById('wordFrequencyChart');
+            if (chartContainer) {
+                chartContainer.innerHTML = '<p class="text-gray-500">No word frequency data available.</p>';
+            }
+            return;
+        }
+
         const ctx = document.getElementById('wordFrequencyChart').getContext('2d');
         const isDark = document.body.classList.contains('dark-theme');
 
@@ -321,9 +334,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
         if (searchText) {
             const regex = new RegExp(searchText, 'gi');
-            transcriptContent.innerHTML = text.replace(regex, match =>
+            transcriptContent.innerHTML = transcriptContent.innerText.replace(regex, match =>
                 `<span class="highlight">${match}</span>`
             );
+
         } else {
             transcriptContent.innerHTML = text;
         }
@@ -342,42 +356,52 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     // Export handling
-    document.querySelectorAll('.dropdown-content a').forEach(link => {
-        link.addEventListener('click', (e) => {
-            e.preventDefault();
-            const format = e.target.dataset.format;
-            const videoTitle = document.getElementById('videoTitle').textContent;
-            const sanitizedTitle = videoTitle.replace(/[^\w\s-]/g, '').replace(/\s+/g, '_');
-            const filename = `${sanitizedTitle}.${format}`;
+    // Add export button handlers
+    document.getElementById('exportPdf').addEventListener('click', () => handleExport('pdf'));
+    document.getElementById('exportText').addEventListener('click', () => handleExport('txt'));
 
-            fetch(`/exports/${filename}`)
-                .then(response => {
-                    if (!response.ok) throw new Error('Export not found');
-                    return response.blob();
+    async function handleExport(format) {
+        const content = document.getElementById('summaryContent').textContent;
+        const videoTitle = document.getElementById('videoTitle').textContent;
+    
+        try {
+            const response = await fetch('/export-summary', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    content: content,
+                    format: format,
+                    title: videoTitle
                 })
-                .then(blob => {
-                    const url = window.URL.createObjectURL(blob);
-                    const a = document.createElement('a');
-                    a.style.display = 'none';
-                    a.href = url;
-                    a.download = filename;
-                    document.body.appendChild(a);
-                    a.click();
-                    window.URL.revokeObjectURL(url);
-                    document.body.removeChild(a);
-                })
-                .catch(error => {
-                    console.error('Export error:', error);
-                    alert('Failed to download file. Please try again.');
-                });
-        });
-    });
+            });
+    
+            if (!response.ok) {
+                throw new Error('Export failed');
+            }
+    
+            const blob = await response.blob();
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.style.display = 'none';
+            a.href = url;
+            a.download = `${videoTitle}_summary.${format}`;
+            document.body.appendChild(a);
+            a.click();
+            window.URL.revokeObjectURL(url);
+            document.body.removeChild(a);
+        } catch (error) {
+            console.error('Export error:', error);
+            alert('Export failed');
+        }
+    }
 
     // SRT download handler
     document.getElementById('downloadSrt').addEventListener('click', () => {
-        const videoTitle = document.getElementById('videoTitle').textContent;
-        const sanitizedTitle = videoTitle.replace(/[^\w\s-]/g, '').replace(/\s+/g, '_');
-        const filename = `${sanitizedTitle}.srt`;
+        if (!currentVideoData?.srt_filename) {
+            alert('No subtitles available for download');
+            return;
+        }
+        const filename = currentVideoData.srt_filename;
 
         fetch(`/exports/${filename}`)
             .then(response => {
@@ -426,7 +450,11 @@ document.addEventListener('DOMContentLoaded', () => {
             e.preventDefault();
             searchTranscript.focus();
         }
-        if (e.key === 't' && !e.ctrlKey) {
+
+        const isSearchFocused = document.activeElement === searchTranscript;
+        const isVideoFocused = document.activeElement === document.getElementById('videoUrl');
+        // Only toggle theme if search transcript is not focused
+        if (e.key === 't' && !e.ctrlKey && !isSearchFocused && !isVideoFocused) {
             themeToggle.click();
         }
     });
@@ -435,6 +463,8 @@ document.addEventListener('DOMContentLoaded', () => {
     videoForm.addEventListener('submit', async function (event) {
         event.preventDefault();
         const videoUrl = document.getElementById('videoUrl').value;
+        const summaryMode = document.getElementById('summaryMode').value;
+
 
         // Show loader
         loader.style.display = 'block';
@@ -446,14 +476,23 @@ document.addEventListener('DOMContentLoaded', () => {
                 headers: {
                     'Content-Type': 'application/json'
                 },
-                body: JSON.stringify({ url: videoUrl })
+                body: JSON.stringify({ url: videoUrl, summary_mode: summaryMode })
             });
 
+            // Add more detailed error checking
             if (!response.ok) {
-                throw new Error(await response.text());
+                const errorText = await response.text();
+                console.error('Server Error:', errorText);
+                throw new Error(errorText || 'Failed to process video');
             }
 
             const data = await response.json();
+            console.log("Full API Response:", data);  // Log full response
+
+            // Add null checks before accessing properties
+            if (!data || !data.metadata) {
+                throw new Error('Invalid response from server');
+            }
 
             // Update video player
             if (player) {
@@ -471,6 +510,7 @@ document.addEventListener('DOMContentLoaded', () => {
             // Clean up existing description elements before updating
             cleanupExistingDescription();
 
+            currentVideoData = data;
             // Update metadata
             document.getElementById('videoTitle').textContent = data.metadata.title;
             document.getElementById('videoAuthor').textContent = data.metadata.author;
@@ -480,6 +520,73 @@ document.addEventListener('DOMContentLoaded', () => {
             initializeDescription(); // Initialize description expansion
 
             // Update content
+            if (data.audio_filename) {
+                const audioContainer = document.getElementById('audioPlayerContainer');
+                initializeAudioPlayer(data.audio_filename);
+            } else {
+                document.getElementById('audioPlayerContainer').innerHTML = '';
+            }
+
+            function initializeAudioPlayer(audioFilename) {
+                const audioContainer = document.getElementById('audioPlayerContainer');
+                const audioHTML = `
+                    <div class="custom-audio-player">
+                        <audio id="customAudio" src="/exports/${audioFilename}"></audio>
+                        <button class="play-pause-btn">
+                            <i class="ri-play-fill"></i>
+                        </button>
+                        <div class="progress-container">
+                            <div class="progress-bar"></div>
+                        </div>
+                        <span class="time-display">0:00</span>
+                    </div>
+                `;
+            
+                audioContainer.innerHTML = audioHTML;
+            
+                const audio = document.getElementById('customAudio');
+                const playBtn = document.querySelector('.play-pause-btn');
+                const progressBar = document.querySelector('.progress-bar');
+                const progressContainer = document.querySelector('.progress-container');
+                const timeDisplay = document.querySelector('.time-display');
+            
+                if (!audio || !playBtn || !progressBar || !progressContainer || !timeDisplay) {
+                    console.error("Audio player elements not found.");
+                    return;
+                }
+            
+                audio.addEventListener('loadedmetadata', () => {
+                    timeDisplay.textContent = formatTime(audio.duration);
+                });
+            
+                audio.addEventListener('timeupdate', () => {
+                    const progress = (audio.currentTime / audio.duration) * 100;
+                    progressBar.style.width = `${progress}%`;
+                    timeDisplay.textContent = formatTime(audio.currentTime);
+                });
+            
+                playBtn.addEventListener('click', () => {
+                    if (audio.paused) {
+                        audio.play();
+                        playBtn.innerHTML = '<i class="ri-pause-fill"></i>';
+                    } else {
+                        audio.pause();
+                        playBtn.innerHTML = '<i class="ri-play-fill"></i>';
+                    }
+                });
+            
+                progressContainer.addEventListener('click', (e) => {
+                    const rect = progressContainer.getBoundingClientRect();
+                    const pos = (e.clientX - rect.left) / rect.width;
+                    audio.currentTime = pos * audio.duration;
+                });
+            
+                audio.addEventListener('ended', () => {
+                    playBtn.innerHTML = '<i class="ri-play-fill"></i>';
+                });
+            }
+
+
             document.getElementById('summaryContent').innerHTML = formatSummary(data.summary);
             createWordFrequencyChart(data.word_frequency);
 
@@ -501,6 +608,7 @@ document.addEventListener('DOMContentLoaded', () => {
             outputSection.style.display = 'block';
             recentVideos.style.display = 'block';
         } catch (error) {
+            console.error('Processing Error:', error);
             alert(`Error processing video: ${error.message}`);
             loader.style.display = 'none';
         }
@@ -509,20 +617,23 @@ document.addEventListener('DOMContentLoaded', () => {
     function formatTime(seconds) {
         // Ensure seconds is a valid number
         const totalSeconds = Math.max(0, parseFloat(seconds) || 0);
-        
+
         const hours = Math.floor(totalSeconds / 3600);
         const minutes = Math.floor((totalSeconds % 3600) / 60);
         const secs = Math.floor(totalSeconds % 60);
-        
+
         // Format with hours if applicable
         if (hours > 0) {
             return `${hours}:${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
         }
-        
+
         return `${minutes}:${secs.toString().padStart(2, '0')}`;
     }
 
     function formatSummary(summary) {
+        if (!summary || summary.trim() === "") {
+            return "<p class='text-gray-500'>No summary available.</p>";
+        }
         const sections = summary.split(/\.\s+/).filter(s => s.trim());
         return sections.map(section =>
             `<div class="summary-section">
@@ -530,6 +641,7 @@ document.addEventListener('DOMContentLoaded', () => {
              </div>`
         ).join('');
     }
+
 
     function scrollToVideo() {
         const player = document.getElementById('player');

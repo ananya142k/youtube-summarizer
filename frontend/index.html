@@ -19,18 +19,26 @@
 
     <div class="container">
         <header>
-            <h1>Personal Summarizer</h1>
+            <h1>Gistify-Video Summarizer</h1>
             <p class="subtitle">Extract Key Insights from Any YouTube Video</p>
         </header>
 
         <div class="input-section">
             <form id="videoForm" class="form-group">
                 <input type="url" id="videoUrl" placeholder="Paste YouTube video URL" required>
+
+                <select id="summaryMode" class="summary-dropdown">
+                    <option value="short">Short</option>
+                    <option value="medium">Medium</option>
+                    <option value="lengthy">Lengthy</option>
+                </select>
+
                 <button type="submit">
                     <i class="ri-search-line"></i> Analyze
                 </button>
             </form>
         </div>
+
 
         <div id="loader" class="loader" style="display: none;">
             <div class="processing-steps">
@@ -78,6 +86,28 @@
                     <h3>Key Insights</h3>
                     <span class="reading-time"></span>
                 </div>
+                <!-- Update audio player HTML -->
+                <div id="audioPlayerContainer">
+                    <h4 class="audio-player-label">Audio Summary</h4>
+                    <div class="custom-audio-player">
+                        <audio id="customAudio" style="display: none;"></audio>
+                        <button class="play-pause-btn">
+                            <i class="ri-play-fill"></i>
+                        </button>
+                        <div class="progress-container">
+                            <div class="progress-bar"></div>
+                        </div>
+                        <span class="time-display">0:00</span>
+                    </div>
+                </div>
+                <div class="summary-export-buttons">
+                    <button id="exportPdf" class="export-btn">
+                        <i class="ri-file-pdf-line"></i> Export PDF
+                    </button>
+                    <button id="exportText" class="export-btn">
+                        <i class="ri-file-text-line"></i> Export Text
+                    </button>
+                </div>
                 <div id="summaryContent"></div>
             </div>
 
@@ -110,15 +140,14 @@
                 <div class="content-header">
                     <h3>Interactive Subtitles</h3>
                     <div class="subtitle-controls">
-                        <button id="downloadSrt">
+                        <button id="downloadSrt" class="export-btn">
                             <i class="ri-download-line"></i> Download SRT
                         </button>
                     </div>
                 </div>
-                <div id="subtitlesContent"></div>
+                <div id="subtitlesContent" class="scroll-container"></div>
             </div>
-        </div>
-        <div id="recentVideos" class="recent-videos" style="display: none;">
+        <div id="recentVideos" class="recent-videos">
             <h3>Recent Videos</h3>
             <div class="recent-videos-grid"></div>
         </div>

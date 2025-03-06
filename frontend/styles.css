@@ -106,6 +106,15 @@ h1 {
     box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
     margin-bottom: 2rem;
 }
+.summary-dropdown {
+    padding: 0.5rem;
+    border: 1px solid #ccc;
+    border-radius: 0.5rem;
+    background: var(--surface-color);
+    font-size: 1rem;
+    cursor: pointer;
+}
+
 
 .form-group {
     display: flex;
@@ -167,6 +176,7 @@ button:hover {
     color: var(--primary-color);
     opacity: 1;
 }
+
 
 .spinner {
     width: 50px;
@@ -516,6 +526,180 @@ footer a:hover {
 .copy-notification.show {
     transform: translateY(0);
     opacity: 1;
+}
+
+/* styles.css - Add audio player styling */
+.audio-player {
+    margin: 1.5rem 0;
+    padding: 1rem;
+    background: var(--surface-color);
+    border-radius: 0.5rem;
+}
+
+audio {
+    width: 100%;
+    max-width: 400px;
+}
+
+.summary-export-buttons {
+    display: flex;
+    gap: 10px;
+    margin-top: 10px;
+}
+
+.export-btn {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    padding: 8px 12px;
+    background-color: #f0f0f0;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+
+.export-btn:hover {
+    background-color: #e0e0e0;
+}
+
+.export-btn i {
+    font-size: 1.2em;
+}
+
+/* Audio Player Styling */
+.audio-player-container {
+    margin: 1.5rem 0;
+}
+
+.audio-player-label {
+    color: var(--text-color);
+    margin-bottom: 0.5rem;
+    font-weight: 500;
+}
+
+.custom-audio-player {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1rem;
+    background: var(--surface-color);
+    border-radius: 0.75rem;
+    border: 1px solid var(--border-color);
+}
+
+/* Export Buttons */
+.summary-export-buttons {
+    display: flex;
+    gap: 1rem;
+    margin: 1rem 0;
+}
+
+.export-btn {
+    background: var(--primary-color);
+    color: white;
+    padding: 0.75rem 1.25rem;
+    border-radius: 0.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    transition: background-color 0.2s;
+}
+
+.export-btn:hover {
+    background: var(--secondary-color);
+}
+
+/* Dropdown Styling */
+.summary-dropdown {
+    padding: 0.75rem;
+    border: 2px solid var(--border-color);
+    border-radius: 0.5rem;
+    background: var(--surface-color);
+    color: var(--text-color);
+    font-size: 1rem;
+    cursor: pointer;
+    transition: border-color 0.2s;
+}
+
+.summary-dropdown:hover {
+    border-color: var(--primary-color);
+}
+
+/* Subtitles Scroll Container */
+#subtitlesContent {
+    height: 50vh;
+    overflow-y: auto;
+    border: 2px solid var(--border-color);
+    border-radius: 0.75rem;
+    margin: 1rem 0;
+    padding: 1rem;
+}
+
+/* Dropdown Theme Fix */
+.summary-dropdown {
+    color: var(--text-color);
+    background: var(--surface-color);
+    border-color: var(--border-color);
+}
+
+.summary-dropdown option {
+    background: var(--surface-color);
+    color: var(--text-color);
+}
+/* Audio Player Styling */
+.audio-player-container {
+    margin: 1.5rem 0;
+}
+
+.audio-player-label {
+    color: var(--text-color);
+    margin-bottom: 0.5rem;
+    font-weight: 500;
+}
+
+.custom-audio-player {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1rem;
+    background: var(--surface-color);
+    border-radius: 0.75rem;
+    border: 1px solid var(--border-color);
+}
+
+.play-pause-btn {
+    background: none;
+    border: none;
+    color: var(--primary-color);
+    font-size: 1.5rem;
+    cursor: pointer;
+    padding: 0.5rem;
+}
+
+.progress-container {
+    flex: 1;
+    height: 4px;
+    background: var(--border-color);
+    border-radius: 2px;
+    position: relative;
+    cursor: pointer;
+}
+
+.progress-bar {
+    height: 100%;
+    background: var(--primary-color);
+    border-radius: 2px;
+    width: 0;
+    transition: width 0.1s;
+}
+
+.time-display {
+    font-family: monospace;
+    font-size: 0.9rem;
+    color: var(--text-color);
+    min-width: 50px;
+    text-align: right;
 }
 
 /* Responsive Design */
