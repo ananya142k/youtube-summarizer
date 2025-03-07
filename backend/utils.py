@@ -190,8 +190,7 @@ async def download_audio(video_url):
     cleanup_old_files(DOWNLOADS_DIR)
 
     try:
-        yt = YouTube(video_url, on_progress_callback=on_download_progress)
-        audio_stream = yt.streams.get_audio_only()
+yt = YouTube(video_url, on_progress_callback=on_download_progress, use_po_token=True)        audio_stream = yt.streams.get_audio_only()
 
         if not audio_stream:
             return {"status": "error", "message": "No audio stream available"}
@@ -361,7 +360,17 @@ async def get_video_captions(video_url):
         urllib.request.urlopen(req)  # This ensures the request is made before pytubefix
 
         # Initialize YouTube object with po_token to bypass bot detection
-        yt = YouTube(video_url, use_po_token=True)  
+        max_retries = 3
+        for attempt in range(max_retries):
+            try:
+                yt = YouTube(video_url, use_po_token=True)
+                break
+            except Exception as e:
+                if attempt < max_retries - 1:
+                    await asyncio.sleep(2 ** attempt)  # Exponential backoff
+                    continue
+                else:
+                    raise e
         captions = yt.captions
 
         if not captions:
