@@ -58,12 +58,16 @@ def handle_exception(e):
 IS_PRODUCTION = os.environ.get('RENDER', False)
 
 # Adjust frontend directory path
+# Determine if running in production
+IS_PRODUCTION = os.environ.get('RENDER', False)
+
+# Adjust frontend directory path based on environment
 if IS_PRODUCTION:
-    FRONTEND_DIR = os.path.join(BASE_DIR, "frontend")
+    FRONTEND_DIR = os.path.join(os.path.dirname(BASE_DIR), "frontend")
 else:
-    FRONTEND_DIR = os.path.join(BASE_DIR, "../frontend")
+    FRONTEND_DIR = os.path.join(os.path.dirname(BASE_DIR), "frontend")
 
-
+# Update your routes to use this FRONTEND_DIR
 @app.route("/")
 def serve_index():
     return send_from_directory(FRONTEND_DIR, "index.html")
@@ -228,4 +232,7 @@ def export_summary():
 
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=5000)
+    # Only bind to 0.0.0.0 in development
+    host = "0.0.0.0" if not IS_PRODUCTION else None
+    port = int(os.environ.get("PORT", 5000))
+    app.run(host=host, port=port)
