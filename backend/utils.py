@@ -21,6 +21,9 @@ from reportlab.lib.pagesizes import letter
 from reportlab.platypus import SimpleDocTemplate, Paragraph
 from reportlab.lib.styles import getSampleStyleSheet
 from datetime import datetime
+import nltk
+from collections import Counter
+
 
 # Load environment variables
 load_dotenv()
@@ -115,34 +118,57 @@ def extract_video_id(url):
     return None
 
 
-def get_word_frequency(text, min_length=4, top_n=50):
-    """Generate word frequency data for visualization."""
+def get_word_frequency(text, min_length=4, top_n=50, additional_stop_words=None):
     try:
-        # Ensure text is a string
         if not text or not isinstance(text, str):
             logging.warning("Empty or invalid text for word frequency")
             return {}
 
+        try:
+            nltk.data.find('corpora/stopwords')
+        except LookupError:
+            logging.info("Downloading NLTK stopwords corpus")
+            nltk.download('stopwords', quiet=True)
+
+        try:
+            from nltk.corpus import stopwords
+            nltk_stop_words = set(stopwords.words("english"))
+        except (ImportError, LookupError):
+            logging.warning("NLTK stopwords not available, using custom list")
+            nltk_stop_words = set()
+
+        custom_stop_words = {
+            "like", "actually", "basically", "literally", "yeah", "okay", "um", "uh",
+            "going", "getting", "think", "know", "mean", "just", "really", "very", 
+            "kind", "sort", "thing", "things", "stuff", "way", "lot", "bit", "make", "made",
+            "want", "need", "trying", "sure", "look", "looks", "looking",
+            "dont", "cant", "wasnt", "isnt", "arent", "hasnt", "havent", "wouldnt",
+            "ive", "youve", "weve", "theyre", "youre", "thats", "theres", 
+            "today", "yesterday", "tomorrow", "time", "year", "month", "week", "day",
+            "one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "ten",
+            "something", "someone", "everybody", "everyone", "anything", "everything",
+            "back", "come", "goes", "around", "through"
+        }
+        
+        stop_words = nltk_stop_words.union(custom_stop_words)
+        
+        if additional_stop_words:
+            stop_words = stop_words.union(additional_stop_words)
+
         words = re.findall(r"\b\w+\b", text.lower())
-        words = [word for word in words if len(word) >= min_length]
+        words = [word for word in words if len(word) >= min_length and word not in stop_words]
+        
         word_counts = Counter(words)
-
-        # Remove common stop words
-        stop_words = {"this", "that", "have", "what", "with", "from", "they"}
-        for word in stop_words:
-            word_counts.pop(word, None)
-
-        # Convert to dictionary and limit to top_n
+        
         frequency_dict = dict(word_counts.most_common(top_n))
 
-        # Log if no words found
         if not frequency_dict:
             logging.info("No words found for word frequency")
 
         return frequency_dict
 
     except Exception as e:
-        logging.error(f"Error generating word frequency: {e}")
+        logging.error(f"Error generating word frequency: {e}", exc_info=True)
         return {}
 
 

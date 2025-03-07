@@ -1,0 +1,12 @@
+flask>=2.0.0
+pytubefix>=1.7.0
+cohere>=4.0.0
+deepgram-sdk>=2.0.0
+python-dotenv>=0.20.0
+google-api-python-client>=2.0.0
+google-auth>=2.0.0
+gtts>=2.3.0
+reportlab>=3.6.0
+aiohttp>=3.8.0
+cachetools>=5.0.0
+nltk>=3.8.1
