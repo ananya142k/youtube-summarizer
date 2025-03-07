@@ -23,7 +23,7 @@ from reportlab.lib.styles import getSampleStyleSheet
 from datetime import datetime
 import nltk
 from collections import Counter
-
+import urllib.request
 
 # Load environment variables
 load_dotenv()
@@ -352,7 +352,16 @@ def sanitize_filename(filename):
 
 async def get_video_captions(video_url):
     try:
-        yt = YouTube(video_url)
+        headers = {
+                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/134.0.0.0 Safari/537.36"
+            }
+
+        # Send a request to YouTube with the custom headers
+        req = urllib.request.Request(video_url, headers=headers)
+        urllib.request.urlopen(req)  # This ensures the request is made before pytubefix
+
+        # Initialize YouTube object with po_token to bypass bot detection
+        yt = YouTube(video_url, use_po_token=True)  
         captions = yt.captions
 
         if not captions:
