@@ -5,6 +5,8 @@ from datetime import datetime
 from cachetools import TTLCache
 from functools import lru_cache
 import asyncio
+import sys
+from pathlib import Path
 
 # Define base paths
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))  # Gets the directory where app.py is located
@@ -52,15 +54,23 @@ def handle_exception(e):
     logging.error(f"Global error handler: {str(e)}")
     return jsonify({"error": "An unexpected error occurred", "details": str(e)}), 500
 
+# Determine if running in development or production
+IS_PRODUCTION = os.environ.get('RENDER', False)
+
+# Adjust frontend directory path
+if IS_PRODUCTION:
+    FRONTEND_DIR = os.path.join(BASE_DIR, "frontend")
+else:
+    FRONTEND_DIR = os.path.join(BASE_DIR, "../frontend")
+
 
 @app.route("/")
 def serve_index():
-    return send_from_directory("../frontend", "index.html")
-
+    return send_from_directory(FRONTEND_DIR, "index.html")
 
 @app.route("/<path:filename>")
 def serve_static(filename):
-    return send_from_directory("../frontend", filename)
+    return send_from_directory(FRONTEND_DIR, filename)
 
 
 @app.route("/process", methods=["POST"])
