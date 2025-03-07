@@ -1,4 +1,24 @@
 from flask import Flask, request, jsonify, send_from_directory, send_file
+import os
+import logging
+from datetime import datetime 
+from cachetools import TTLCache
+from functools import lru_cache
+import asyncio
+
+# Define base paths
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))  # Gets the directory where app.py is located
+EXPORTS_DIR = os.path.join(BASE_DIR, "exports")
+DOWNLOADS_DIR = os.path.join(BASE_DIR, "downloads")
+CAPTIONS_DIR = os.path.join(BASE_DIR, "captions")
+
+# Initialize directories with absolute paths
+for directory in [EXPORTS_DIR, DOWNLOADS_DIR, CAPTIONS_DIR]:
+    if not os.path.exists(directory):
+        os.makedirs(directory)
+        logging.info(f"Created directory: {directory}")
+
+# Import utils and set the directories
 from utils import (
     get_video_metadata,
     download_audio,
@@ -12,21 +32,13 @@ from utils import (
     export_summary_to_pdf,
     cleanup_old_files,
     sanitize_filename,
-     parse_duration_to_seconds,  
-    format_duration, 
-    EXPORTS_DIR,
+    parse_duration_to_seconds,  
+    format_duration,
+    set_directories,  # Import the new function
 )
-import asyncio
-import os
-import logging
-from datetime import datetime 
-from cachetools import TTLCache
-from functools import lru_cache
 
-# Initialize directories
-for directory in ["exports", "downloads", "captions"]:
-    if not os.path.exists(directory):
-        os.makedirs(directory)
+# Set directories in utils
+set_directories(EXPORTS_DIR, DOWNLOADS_DIR, CAPTIONS_DIR)
 
 # Initialize cache with 1-hour timeout
 cache = TTLCache(maxsize=100, ttl=3600)
@@ -157,7 +169,7 @@ def process_video():
 @app.route("/exports/<filename>")
 def serve_exports(filename):
     try:
-        return send_from_directory("exports", filename, as_attachment=True)
+        return send_from_directory(EXPORTS_DIR, filename, as_attachment=True)
     except Exception as e:
         return jsonify({"error": str(e)}), 404
 

@@ -35,11 +35,28 @@ youtube_api_key = os.getenv("YOUTUBE_API_KEY")
 co = cohere.ClientV2(cohere_api_key)
 youtube = build("youtube", "v3", developerKey=youtube_api_key)
 
-# Constants
+# Constants - these will be overridden by app.py
+# Keep them as fallbacks for direct module usage
 EXPORTS_DIR = "exports"
 DOWNLOADS_DIR = "downloads"
 CAPTIONS_DIR = "captions"
 CLEANUP_THRESHOLD = timedelta(hours=24)  # Clean files older than 24 hours
+
+# Function to set directories from app.py
+def set_directories(exports_dir, downloads_dir, captions_dir):
+    global EXPORTS_DIR, DOWNLOADS_DIR, CAPTIONS_DIR
+    EXPORTS_DIR = exports_dir
+    DOWNLOADS_DIR = downloads_dir
+    CAPTIONS_DIR = captions_dir
+    
+    # Ensure directories exist
+    for directory in [EXPORTS_DIR, DOWNLOADS_DIR, CAPTIONS_DIR]:
+        ensure_directory(directory)
+    
+    # Log the directory paths
+    logging.info(f"Set EXPORTS_DIR to: {EXPORTS_DIR}")
+    logging.info(f"Set DOWNLOADS_DIR to: {DOWNLOADS_DIR}")
+    logging.info(f"Set CAPTIONS_DIR to: {CAPTIONS_DIR}")
 
 
 @lru_cache(maxsize=128)
@@ -73,11 +90,6 @@ def cleanup_old_files(directory, threshold=CLEANUP_THRESHOLD):
                 logging.info(f"Cleaned up old file: {file_path}")
             except Exception as e:
                 logging.error(f"Error cleaning up file {file_path}: {e}")
-
-
-# Run cleanup on startup
-for directory in [EXPORTS_DIR, DOWNLOADS_DIR, CAPTIONS_DIR]:
-    cleanup_old_files(directory)
 
 
 def get_youtube_player_data(video_url):
@@ -447,83 +459,6 @@ def parse_timestamp(timestamp):
     hours, minutes, seconds = timestamp.replace(",", ".").split(":")
     return float(hours) * 3600 + float(minutes) * 60 + float(seconds)
 
-    async def _get_captions(self, video_url: str) -> dict[str, any]:
-        """Get and parse video captions."""
-        try:
-            yt = YouTube(video_url)
-            captions = yt.captions
-
-            if not captions:
-                return None
-
-            # Try to get English captions first, fall back to any available
-            caption_track = None
-            for lang_code in ["a.en", "en"]:
-                if lang_code in captions:
-                    caption_track = captions[lang_code]
-                    break
-
-            if not caption_track and captions:
-                caption_track = list(captions.values())[0]
-
-            if caption_track:
-                srt_content = caption_track.generate_srt_captions()
-                subtitles = self._parse_srt(srt_content)
-
-                # Create clean transcript (text only)
-                transcript = " ".join(sub["text"] for sub in subtitles)
-
-                return {
-                    "transcript": transcript,
-                    "subtitles": subtitles,
-                    "source": "captions",
-                }
-
-            return None
-
-        except Exception as e:
-            self.logger.error(f"Error getting video captions: {e}")
-            return None
-
-    async def process_video(self, video_url: str) -> dict[str, any]:
-        try:
-            video_id = self.extract_video_id(video_url)
-            if not video_id:
-                raise ValueError("Invalid YouTube URL")
-
-            # Parallel fetch of metadata and captions
-            metadata_task = asyncio.create_task(self._get_metadata(video_id))
-            captions_task = asyncio.create_task(self._get_captions(video_url))
-
-            metadata = await metadata_task
-            captions_data = await captions_task
-
-            if not captions_data:
-                # Fall back to audio transcription if no captions
-                audio_file = await self._download_audio(video_url)
-                transcript_data = await self._transcribe_audio(audio_file)
-                transcript = transcript_data["transcript"]
-                subtitles = None  # No subtitles available for audio transcription
-            else:
-                transcript = captions_data["transcript"]
-                subtitles = captions_data["subtitles"]
-
-            # Process transcript
-            word_frequency = self._get_word_frequency(transcript)
-            summary = await self._generate_summary(transcript)
-
-            return {
-                "metadata": metadata,
-                "transcription": transcript,
-                "subtitles": subtitles,
-                "summary": summary,
-                "word_frequency": word_frequency,
-            }
-
-        except Exception as e:
-            self.logger.error(f"Error processing video: {e}")
-            raise
-
 
 def parse_duration_to_seconds(duration_str):
     """Convert ISO 8601 duration string (PT1H30M15S) to seconds."""
@@ -576,16 +511,7 @@ def format_duration(seconds):
 
 
 def summarize_text(text, mode="short", duration_seconds=None):
-    """Summarize text using Cohere's Chat endpoint based on selected mode and video duration.
-
-    Args:
-        text (str): The transcript text to summarize
-        mode (str): Summary length preference ("short", "medium", or "lengthy")
-        duration_seconds (int, optional): Video duration in seconds
-
-    Returns:
-        str: Generated summary
-    """
+    """Summarize text using Cohere's Chat endpoint based on selected mode and video duration."""
     try:
         # Default reading speed (words per minute)
         WPM = 150
