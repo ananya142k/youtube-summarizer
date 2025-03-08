@@ -23,7 +23,7 @@ from reportlab.lib.styles import getSampleStyleSheet
 from datetime import datetime
 import nltk
 from collections import Counter
-import urllib.request
+
 
 # Load environment variables
 load_dotenv()
@@ -190,7 +190,8 @@ async def download_audio(video_url):
     cleanup_old_files(DOWNLOADS_DIR)
 
     try:
-        yt = YouTube(video_url, on_progress_callback=on_download_progress, use_po_token=True)
+        
+        yt = YouTube(video_url, use_oauth=True, allow_oauth_cache=True)
         audio_stream = yt.streams.get_audio_only()
 
         if not audio_stream:
@@ -352,26 +353,8 @@ def sanitize_filename(filename):
 
 async def get_video_captions(video_url):
     try:
-        headers = {
-                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/134.0.0.0 Safari/537.36"
-            }
-
-        # Send a request to YouTube with the custom headers
-        req = urllib.request.Request(video_url, headers=headers)
-        urllib.request.urlopen(req)  # This ensures the request is made before pytubefix
-
-        # Initialize YouTube object with po_token to bypass bot detection
-        max_retries = 3
-        for attempt in range(max_retries):
-            try:
-                yt = YouTube(video_url, use_po_token=True)
-                break
-            except Exception as e:
-                if attempt < max_retries - 1:
-                    await asyncio.sleep(2 ** attempt)  # Exponential backoff
-                    continue
-                else:
-                    raise e
+       
+         yt = YouTube(video_url, use_oauth=True, allow_oauth_cache=True)
         captions = yt.captions
 
         if not captions:
