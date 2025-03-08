@@ -354,7 +354,7 @@ def sanitize_filename(filename):
 async def get_video_captions(video_url):
     try:
        
-         yt = YouTube(video_url, use_oauth=True, allow_oauth_cache=True)
+        yt = YouTube(video_url, use_oauth=True, allow_oauth_cache=True)
         captions = yt.captions
 
         if not captions:
